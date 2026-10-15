@@ -76,7 +76,7 @@ class AnalyticsView extends StatelessWidget {
                 subText: streak > 0 ? 'Keep the fire alive!' : 'Save today to start!',
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: _MetricCard(
                 icon: Icons.calculate_rounded,
@@ -90,7 +90,7 @@ class AnalyticsView extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         Row(
           children: [
@@ -104,7 +104,7 @@ class AnalyticsView extends StatelessWidget {
                 subText: 'Easiest deposit',
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: _MetricCard(
                 icon: Icons.arrow_upward_rounded,
@@ -118,7 +118,7 @@ class AnalyticsView extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
 
         // Timeline Activity History Section Header
         Text(
@@ -127,44 +127,59 @@ class AnalyticsView extends StatelessWidget {
             fontSize: 11,
             letterSpacing: 1.2,
             fontWeight: FontWeight.w900,
-            color: isDark ? AppTheme.textSecondary : Colors.black54,
+            color: isDark ? AppTheme.textSecondary : AppTheme.mutedSlate,
           ),
         ),
         const SizedBox(height: 10),
 
         if (completedSegments.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.mutedSlate : AppTheme.lightCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppTheme.mutedSlate.withValues(alpha: 0.92)
+                    : AppTheme.lightCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+                  width: 0.8,
+                ),
               ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.history_rounded,
-                  size: 40,
-                  color: isDark ? AppTheme.textSecondary.withValues(alpha: 0.4) : Colors.black26,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'No savings activity yet',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tap any envelope tile or draw a mystery envelope to log your first savings!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppTheme.textSecondary : Colors.black54,
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    size: 38,
+                    color: isDark
+                        ? AppTheme.textSecondary.withValues(alpha: 0.4)
+                        : AppTheme.mutedSlate.withValues(alpha: 0.4),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    'No savings activity yet',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark ? AppTheme.textPrimary : AppTheme.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tap any envelope tile or draw a mystery envelope to log your first savings!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppTheme.textSecondary
+                          : AppTheme.mutedSlate,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
             ),
           )
         else
@@ -183,26 +198,33 @@ class AnalyticsView extends StatelessWidget {
                   : item.amount.toStringAsFixed(0);
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.mutedSlate : AppTheme.lightCard,
+                  color: isDark
+                      ? AppTheme.mutedSlate.withValues(alpha: 0.92)
+                      : AppTheme.lightCard,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+                    width: 0.8,
                   ),
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: AppTheme.warmPeach.withValues(alpha: 0.2),
+                        color: AppTheme.warmPeach.withValues(alpha: 0.18),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.warmPeach.withValues(alpha: 0.35),
+                          width: 0.8,
+                        ),
                       ),
                       child: const Icon(
                         Icons.check_rounded,
                         color: AppTheme.warmPeach,
-                        size: 16,
+                        size: 15,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -212,22 +234,27 @@ class AnalyticsView extends StatelessWidget {
                         children: [
                           Text(
                             'Envelope #${item.index}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
+                              color: isDark ? AppTheme.textPrimary : AppTheme.textDark,
                             ),
                           ),
                           Text(
                             dateStr,
                             style: TextStyle(
                               fontSize: 11,
-                              color: isDark ? AppTheme.textSecondary : Colors.black54,
+                              color: isDark
+                                  ? AppTheme.textSecondary
+                                  : AppTheme.mutedSlate,
                             ),
                           ),
                           if (item.note != null && item.note!.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Text(
                               'Note: ${item.note}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.softCoral,
@@ -238,6 +265,7 @@ class AnalyticsView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       '+${goal.currencySymbol}$amt',
                       style: const TextStyle(
@@ -277,12 +305,15 @@ class _MetricCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.mutedSlate : AppTheme.lightCard,
+        color: isDark
+            ? AppTheme.mutedSlate.withValues(alpha: 0.92)
+            : AppTheme.lightCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+          width: 0.8,
         ),
       ),
       child: Column(
@@ -290,15 +321,19 @@ class _MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: iconColor),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.0,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? AppTheme.textSecondary : Colors.black54,
+              Icon(icon, size: 15, color: iconColor),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppTheme.textSecondary : AppTheme.mutedSlate,
+                  ),
                 ),
               ),
             ],
@@ -306,18 +341,25 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 19,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
-              color: isDark ? AppTheme.textPrimary : const Color(0xFF231E3D),
+              color: isDark ? AppTheme.textPrimary : AppTheme.textDark,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
-              color: isDark ? AppTheme.textSecondary : Colors.black54,
+              color: isDark
+                  ? AppTheme.textSecondary
+                  : AppTheme.mutedSlate,
             ),
           ),
         ],
@@ -325,4 +367,3 @@ class _MetricCard extends StatelessWidget {
     );
   }
 }
-

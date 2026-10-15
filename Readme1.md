@@ -1,1 +1,0 @@
-This is a flutter demo that calculates your savings by making it fun and random while including the actual goal for the savings

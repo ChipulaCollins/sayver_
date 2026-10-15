@@ -8,6 +8,7 @@ class GoalHeaderCard extends StatelessWidget {
   final VoidCallback onAutoDeposit;
   final VoidCallback onShuffleSegments;
   final VoidCallback onEditGoal;
+  final VoidCallback? onViewInsights;
 
   const GoalHeaderCard({
     super.key,
@@ -16,27 +17,8 @@ class GoalHeaderCard extends StatelessWidget {
     required this.onAutoDeposit,
     required this.onShuffleSegments,
     required this.onEditGoal,
+    this.onViewInsights,
   });
-
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName) {
-      case 'shield':
-        return Icons.security_rounded;
-      case 'mail':
-        return Icons.mark_email_unread_rounded;
-      case 'flight':
-        return Icons.flight_takeoff_rounded;
-      case 'tech':
-        return Icons.laptop_mac_rounded;
-      case 'car':
-        return Icons.directions_car_rounded;
-      case 'home':
-        return Icons.home_rounded;
-      case 'savings':
-      default:
-        return Icons.account_balance_wallet_rounded;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,203 +32,145 @@ class GoalHeaderCard extends StatelessWidget {
     final targetStr = goal.allowCents
         ? goal.targetAmount.toStringAsFixed(2)
         : goal.targetAmount.toStringAsFixed(0);
+    final remainingStr = goal.allowCents
+        ? goal.remainingAmount.toStringAsFixed(2)
+        : goal.remainingAmount.toStringAsFixed(0);
 
     final pace = goal.estimatedDailyPace;
     final paceStr = goal.allowCents ? pace.toStringAsFixed(2) : pace.toStringAsFixed(0);
 
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
+        color: isDark ? AppTheme.mutedSlate.withValues(alpha: 0.55) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  AppTheme.mutedSlate,
-                  AppTheme.darkNavy,
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFF4EFF8),
-                ],
+        border: Border.all(
+          color: isDark
+              ? AppTheme.borderSlate.withValues(alpha: 0.6)
+              : AppTheme.lightBorder.withValues(alpha: 0.7),
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.warmPeach.withValues(alpha: isDark ? 0.15 : 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(
-          color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
-          width: 1,
-        ),
       ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Header Row: Category Badge & Title & Options Menu
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxMetricWidth = constraints.maxWidth;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.warmPeach.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.warmPeach.withValues(alpha: 0.3)),
-                ),
-                child: Icon(
-                  _getCategoryIcon(goal.iconName),
-                  color: AppTheme.warmPeach,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
+          // Header eyebrow: Category & status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      goal.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: isDark ? AppTheme.textPrimary : const Color(0xFF231E3D),
-                        letterSpacing: -0.3,
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.warmPeach,
+                        shape: BoxShape.circle,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.softCoral.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            goal.category.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.softCoral,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                    const SizedBox(width: 7),
+                    Flexible(
+                      child: Text(
+                        '${goal.category.toUpperCase()} • ${goal.completedCount}/${goal.segmentCount} SAVED',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                          color: isDark ? AppTheme.textSecondary : Colors.black54,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${goal.completedCount}/${goal.segmentCount} Envelopes Done',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? AppTheme.textSecondary : Colors.black54,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.more_vert_rounded,
-                  color: isDark ? AppTheme.textSecondary : Colors.black54,
-                ),
-                onPressed: onEditGoal,
-                tooltip: 'Goal Settings',
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // Main Amount Counter & Warm Peach Percentage Badge
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${goal.currencySymbol} $savedStr ',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                              color: AppTheme.warmPeach,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '/ ${goal.currencySymbol} $targetStr',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppTheme.textSecondary : Colors.black45,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Percentage Badge with Soft Coral Glow
+              const SizedBox(width: 8),
+              // Percentage Chip
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.warmPeach, AppTheme.softCoral],
+                  color: AppTheme.warmPeach.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppTheme.warmPeach.withValues(alpha: 0.4),
+                    width: 0.8,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.softCoral.withValues(alpha: 0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
                 ),
                 child: Text(
                   '$percent%',
                   style: const TextStyle(
+                    fontSize: 11,
                     fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    color: AppTheme.textDark,
+                    color: AppTheme.warmPeach,
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
-          // Modern Gradient Progress Bar (Warm Peach -> Soft Coral)
+          // Hero Big Typography Amount
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${goal.currencySymbol} $savedStr',
+                  style: TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.0,
+                    color: isDark ? AppTheme.textPrimary : const Color(0xFF231E3D),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'of ${goal.currencySymbol} $targetStr',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppTheme.textSecondary : Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Sleek Glowing Progress Line
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: Stack(
               children: [
                 Container(
-                  height: 10,
+                  height: 8,
                   width: double.infinity,
-                  color: isDark ? AppTheme.darkNavy.withValues(alpha: 0.6) : AppTheme.lightBorder,
+                  color: isDark
+                      ? AppTheme.darkNavy.withValues(alpha: 0.8)
+                      : AppTheme.lightCard,
                 ),
                 FractionallySizedBox(
                   widthFactor: goal.progressPercentage,
                   child: Container(
-                    height: 10,
+                    height: 8,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
@@ -254,7 +178,14 @@ class GoalHeaderCard extends StatelessWidget {
                           AppTheme.softCoral,
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.warmPeach.withValues(alpha: 0.6),
+                          blurRadius: 8,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -264,141 +195,71 @@ class GoalHeaderCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // Sub-Metrics Bar: Remaining balance & Daily recommended pace
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Sub-metrics Pill Row
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.savings_outlined, size: 14, color: AppTheme.softCoral),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Remaining: ${goal.currencySymbol} ${(goal.remainingAmount).toStringAsFixed(goal.allowCents ? 2 : 0)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.textSecondary : Colors.black54,
-                    ),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxMetricWidth),
+                child: Text(
+                  'Remaining: ${goal.currencySymbol} $remainingStr',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppTheme.textSecondary : Colors.black54,
                   ),
-                ],
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.speed_rounded, size: 14, color: AppTheme.warmPeach),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Pace: ${goal.currencySymbol} $paceStr/day',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.warmPeach,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // Action Toolbar: Mystery Draw, Deposit Budget, Shuffle
-          Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.casino_rounded,
-                  label: 'Mystery Draw',
-                  color: AppTheme.warmPeach,
-                  onTap: onSurprisePick,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.add_circle_outline_rounded,
-                  label: 'Auto Deposit',
-                  color: AppTheme.softCoral,
-                  onTap: onAutoDeposit,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxMetricWidth),
+                child: InkWell(
+                  onTap: onViewInsights,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.speed_rounded,
+                            size: 13,
+                            color: AppTheme.warmPeach.withValues(alpha: 0.9),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${goal.currencySymbol} $paceStr/day',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.warmPeach,
+                            ),
+                          ),
+                          if (onViewInsights != null) ...[
+                            const SizedBox(width: 3),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 14,
+                              color: isDark ? AppTheme.textSecondary : Colors.black45,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              _ActionButton(
-                icon: Icons.shuffle_rounded,
-                label: 'Shuffle',
-                color: AppTheme.warmPeach,
-                isIconButton: true,
-                onTap: onShuffleSegments,
               ),
             ],
           ),
         ],
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 }
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  final bool isIconButton;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-    this.isIconButton = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            vertical: 11,
-            horizontal: isIconButton ? 12 : 12,
-          ),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.16 : 0.12),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: 0.35),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: color),
-              if (!isIconButton) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: color,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-

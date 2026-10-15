@@ -181,6 +181,37 @@ class SavingsGoal {
     return completedSegments.first.completedAt;
   }
 
+  int get currentStreakDays {
+    final completed = segments
+        .where((s) => s.isCompleted && s.completedAt != null)
+        .toList();
+    if (completed.isEmpty) return 0;
+
+    final Set<String> daysSaved = {};
+    for (final s in completed) {
+      final d = s.completedAt!;
+      daysSaved.add(
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+      );
+    }
+
+    final now = DateTime.now();
+    int streak = 0;
+
+    for (int i = 0; i < 365; i++) {
+      final checkDate = now.subtract(Duration(days: i));
+      final dateStr =
+          '${checkDate.year.toString().padLeft(4, '0')}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
+      if (daysSaved.contains(dateStr)) {
+        streak++;
+      } else {
+        if (i == 0) continue;
+        break;
+      }
+    }
+    return streak;
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,

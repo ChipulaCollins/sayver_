@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'models/savings_goal.dart';
@@ -84,9 +85,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _HomeScreenState extends State<HomeScreen> {
   List<SavingsGoal> _goals = [];
   SavingsGoal? _activeGoal;
   bool _isLoading = true;
@@ -98,14 +97,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -134,9 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _saveCurrentState() async {
     await StorageService.saveGoals(_goals);
-    if (_activeGoal != null) {
-      await StorageService.saveActiveGoalId(_activeGoal!.id);
-    }
+    await StorageService.saveActiveGoalId(_activeGoal?.id);
   }
 
   void _setActiveGoal(SavingsGoal goal) {
@@ -236,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (context) => ShareProgressDialog(
         goal: _activeGoal!,
-        streakDays: 5,
+        streakDays: _activeGoal!.currentStreakDays,
       ),
     );
   }
@@ -344,12 +334,13 @@ class _HomeScreenState extends State<HomeScreen>
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -531,41 +522,66 @@ class _HomeScreenState extends State<HomeScreen>
       trigger: _triggerConfetti,
       child: Scaffold(
         appBar: AppBar(
-          titleSpacing: 16,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: AppTheme.warmPeach.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.warmPeach.withValues(alpha: 0.3)),
+          titleSpacing: 12,
+          title: _activeGoal != null
+              ? InkWell(
+                  onTap: _openGoalSwitcherSheet,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppTheme.mutedSlate.withValues(alpha: 0.6)
+                          : AppTheme.lightCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark
+                            ? AppTheme.borderSlate.withValues(alpha: 0.8)
+                            : AppTheme.lightBorder,
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getCategoryIcon(_activeGoal!.iconName),
+                          color: AppTheme.warmPeach,
+                          size: 15,
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            _activeGoal!.title,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: isDark ? AppTheme.textPrimary : const Color(0xFF231E3D),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 17,
+                          color: isDark ? AppTheme.textSecondary : Colors.black45,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const Text(
+                  'Sayver',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: -0.5,
+                    color: AppTheme.warmPeach,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.savings_rounded,
-                  color: AppTheme.warmPeach,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Sayver',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  letterSpacing: -0.5,
-                  color: AppTheme.warmPeach,
-                ),
-              ),
-            ],
-          ),
           actions: [
-            if (_activeGoal != null)
-              IconButton(
-                icon: const Icon(Icons.share_rounded, size: 20),
-                tooltip: 'Share Card',
-                onPressed: _openShareDialog,
-              ),
             IconButton(
               icon: Icon(
                 isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
@@ -574,231 +590,560 @@ class _HomeScreenState extends State<HomeScreen>
               tooltip: 'Toggle Theme',
               onPressed: widget.onToggleTheme,
             ),
-            const SizedBox(width: 4),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.warmPeach,
-                  foregroundColor: AppTheme.textDark,
-                  elevation: 2,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text(
-                  'New Goal',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
-                ),
-                onPressed: _openCreateGoalDialog,
+            if (_activeGoal != null)
+              IconButton(
+                icon: const Icon(Icons.tune_rounded, size: 20),
+                tooltip: 'Goal Settings',
+                onPressed: _openGoalSettings,
               ),
-            ),
+            const SizedBox(width: 6),
           ],
-          bottom: _goals.isEmpty
-              ? null
-              : PreferredSize(
-                  preferredSize: const Size.fromHeight(56),
-                  child: Container(
-                    height: 48,
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: isDark ? AppTheme.mutedSlate : AppTheme.lightCard,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
-                              ),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<SavingsGoal>(
-                                value: _activeGoal,
-                                isExpanded: true,
-                                icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                                items: _goals.map((goal) {
-                                  return DropdownMenuItem<SavingsGoal>(
-                                    value: goal,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          _getCategoryIcon(goal.iconName),
-                                          size: 18,
-                                          color: AppTheme.warmPeach,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Flexible(
-                                          child: Text(
-                                            goal.title,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.softCoral.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            '${(goal.progressPercentage * 100).toInt()}%',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: AppTheme.softCoral,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (goal) {
-                                  if (goal != null) {
-                                    _setActiveGoal(goal);
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
         ),
 
         body: _activeGoal == null
             ? _buildEmptyState()
-            : Column(
-                children: [
-                  Container(
-                    color: theme.scaffoldBackgroundColor,
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorColor: AppTheme.warmPeach,
-                      labelColor: AppTheme.warmPeach,
-                      unselectedLabelColor: isDark ? AppTheme.textSecondary : Colors.black45,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.w900),
-                      tabs: const [
-                        Tab(
-                          icon: Icon(Icons.grid_view_rounded, size: 20),
-                          text: 'Envelopes Grid',
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Rapid Stat Pills
+                        _buildRapidStatPills(_activeGoal!, isDark),
+                        const SizedBox(height: 12),
+
+                        // Zen Hero Header
+                        GoalHeaderCard(
+                          goal: _activeGoal!,
+                          onSurprisePick: _openSurprisePicker,
+                          onAutoDeposit: _openAutoDeposit,
+                          onShuffleSegments: _shuffleCurrentGoalSegments,
+                          onEditGoal: _openGoalSettings,
+                          onViewInsights: _openInsightsModal,
                         ),
-                        Tab(
-                          icon: Icon(Icons.insights_rounded, size: 20),
-                          text: 'Analytics & History',
+
+                        const SizedBox(height: 14),
+
+                        // Segmented Action Pill Toolbar
+                        _buildActionToolbar(isDark),
+
+                        const SizedBox(height: 14),
+
+                        // Filter & Sort Pills
+                        _buildFilterBar(theme, isDark),
+
+                        const SizedBox(height: 14),
+
+                        // Minimalist Envelope Mesh
+                        if (filteredSegments.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 48),
+                            child: Center(
+                              child: Text(
+                                'No envelopes match your filter.',
+                                style: TextStyle(
+                                  color: isDark ? AppTheme.textSecondary : Colors.black45,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              int crossAxisCount = 3;
+                              if (constraints.maxWidth > 850) {
+                                crossAxisCount = 6;
+                              } else if (constraints.maxWidth > 550) {
+                                crossAxisCount = 4;
+                              } else if (constraints.maxWidth < 310) {
+                                crossAxisCount = 2;
+                              }
+
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 9,
+                                  mainAxisSpacing: 9,
+                                  childAspectRatio: 1.15,
+                                ),
+                                itemCount: filteredSegments.length,
+                                itemBuilder: (context, index) {
+                                  final segment = filteredSegments[index];
+                                  return EnvelopeTile(
+                                    segment: segment,
+                                    currencySymbol: _activeGoal!.currencySymbol,
+                                    allowCents: _activeGoal!.allowCents,
+                                    onTap: () => _toggleSegmentCompletion(segment),
+                                    onLongPress: () => _openSegmentDetail(segment),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildRapidStatPills(SavingsGoal goal, bool isDark) {
+    final remStr = goal.allowCents
+        ? goal.remainingAmount.toStringAsFixed(2)
+        : goal.remainingAmount.toStringAsFixed(0);
+    final paceStr = goal.estimatedDailyPace.toStringAsFixed(0);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          _buildStatPill(
+            icon: '🔥',
+            label: '${goal.currentStreakDays}d',
+            isDark: isDark,
+            accentColor: AppTheme.warmPeach,
+          ),
+          const SizedBox(width: 8),
+          _buildStatPill(
+            icon: '⚡',
+            label: '${goal.currencySymbol}$paceStr/d',
+            isDark: isDark,
+            accentColor: AppTheme.softCoral,
+            onTap: _openInsightsModal,
+          ),
+          const SizedBox(width: 8),
+          _buildStatPill(
+            icon: '⏳',
+            label: '${goal.currencySymbol}$remStr left',
+            isDark: isDark,
+            accentColor: isDark ? AppTheme.textSecondary : const Color(0xFF48426D),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatPill({
+    required String icon,
+    required String label,
+    required bool isDark,
+    required Color accentColor,
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppTheme.mutedSlate.withValues(alpha: 0.45)
+                : AppTheme.lightCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? AppTheme.borderSlate.withValues(alpha: 0.5)
+                  : AppTheme.lightBorder.withValues(alpha: 0.7),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? AppTheme.textPrimary : const Color(0xFF231E3D),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionToolbar(bool isDark) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          decoration: BoxDecoration(
+            color: (isDark ? AppTheme.mutedSlate : Colors.white).withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: (isDark ? AppTheme.borderSlate : AppTheme.lightBorder).withValues(alpha: 0.8),
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // 1. Primary Action: Mystery Draw (Glow Warm Peach)
+              Expanded(
+                flex: 4,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _openSurprisePicker,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppTheme.warmPeach, Color(0xFFF3CBA0)],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.warmPeach.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.casino_rounded, size: 16, color: AppTheme.textDark),
+                            SizedBox(width: 5),
+                            Text(
+                              'Draw',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12.5,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // 2. Quick Auto-Deposit
+              Expanded(
+                flex: 2,
+                child: _ActionPillButton(
+                  icon: Icons.add_circle_outline_rounded,
+                  tooltip: 'Auto Deposit',
+                  color: AppTheme.softCoral,
+                  isDark: isDark,
+                  onTap: _openAutoDeposit,
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // 3. Shuffler
+              Expanded(
+                flex: 2,
+                child: _ActionPillButton(
+                  icon: Icons.shuffle_rounded,
+                  tooltip: 'Shuffle',
+                  color: AppTheme.warmPeach,
+                  isDark: isDark,
+                  onTap: _shuffleCurrentGoalSegments,
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // 4. Insights & Jar Visualizer Sheet
+              Expanded(
+                flex: 2,
+                child: _ActionPillButton(
+                  icon: Icons.insights_rounded,
+                  tooltip: 'Jar & Insights',
+                  color: AppTheme.warmPeach,
+                  isDark: isDark,
+                  onTap: _openInsightsModal,
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              // 5. Create New Goal
+              Expanded(
+                flex: 2,
+                child: _ActionPillButton(
+                  icon: Icons.add_rounded,
+                  tooltip: 'New Goal',
+                  color: isDark ? AppTheme.textSecondary : Colors.black87,
+                  isDark: isDark,
+                  onTap: _openCreateGoalDialog,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openGoalSwitcherSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.mutedSlate : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+              color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Flexible(
+                      child: Text(
+                        'Savings Goals',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.warmPeach,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('New Goal', style: TextStyle(fontWeight: FontWeight.w800)),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openCreateGoalDialog();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _goals.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final g = _goals[index];
+                      final isCurrent = g.id == _activeGoal?.id;
+                      return InkWell(
+                        onTap: () {
+                          _setActiveGoal(g);
+                          Navigator.pop(context);
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isCurrent
+                                ? AppTheme.warmPeach.withValues(alpha: 0.15)
+                                : (isDark ? AppTheme.darkNavy.withValues(alpha: 0.4) : AppTheme.lightCard),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isCurrent
+                                  ? AppTheme.warmPeach
+                                  : (isDark ? AppTheme.borderSlate : AppTheme.lightBorder),
+                              width: isCurrent ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getCategoryIcon(g.iconName),
+                                color: isCurrent
+                                    ? AppTheme.warmPeach
+                                    : (isDark ? AppTheme.textSecondary : Colors.black54),
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      g.title,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                        color: isCurrent
+                                            ? AppTheme.warmPeach
+                                            : (isDark ? AppTheme.textPrimary : Colors.black87),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${g.currencySymbol} ${g.savedAmount.toInt()} of ${g.currencySymbol} ${g.targetAmount.toInt()} (${(g.progressPercentage * 100).toInt()}%)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? AppTheme.textSecondary : Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isCurrent)
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppTheme.warmPeach,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openInsightsModal() {
+    if (_activeGoal == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkNavy : AppTheme.lightBg,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(
+                  color: isDark ? AppTheme.borderSlate : AppTheme.lightBorder,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getCategoryIcon(_activeGoal!.iconName),
+                                color: AppTheme.warmPeach,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _activeGoal!.title,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.share_rounded, size: 20),
+                          tooltip: 'Share Challenge Card',
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _openShareDialog();
+                          },
                         ),
                       ],
                     ),
                   ),
-
+                  const Divider(height: 1),
                   Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
                       children: [
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GoalHeaderCard(
-                                goal: _activeGoal!,
-                                onSurprisePick: _openSurprisePicker,
-                                onAutoDeposit: _openAutoDeposit,
-                                onShuffleSegments: _shuffleCurrentGoalSegments,
-                                onEditGoal: _openGoalSettings,
-                              ),
-
-                              const SizedBox(height: 14),
-
-                              SavingsJarVisualizer(goal: _activeGoal!),
-
-                              const SizedBox(height: 16),
-
-                              _buildFilterBar(theme, isDark),
-
-                              const SizedBox(height: 14),
-
-                              if (filteredSegments.isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 40),
-                                  child: Center(
-                                    child: Text(
-                                      'No envelopes match your filter selection.',
-                                      style: TextStyle(
-                                        color: isDark ? AppTheme.textSecondary : Colors.black45,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    int crossAxisCount = 3;
-                                    if (constraints.maxWidth > 900) {
-                                      crossAxisCount = 6;
-                                    } else if (constraints.maxWidth > 600) {
-                                      crossAxisCount = 4;
-                                    } else if (constraints.maxWidth < 360) {
-                                      crossAxisCount = 2;
-                                    }
-
-                                    return GridView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: crossAxisCount,
-                                        crossAxisSpacing: 10,
-                                        mainAxisSpacing: 10,
-                                        childAspectRatio: 1.05,
-                                      ),
-                                      itemCount: filteredSegments.length,
-                                      itemBuilder: (context, index) {
-                                        final segment = filteredSegments[index];
-                                        return EnvelopeTile(
-                                          segment: segment,
-                                          currencySymbol:
-                                              _activeGoal!.currencySymbol,
-                                          allowCents: _activeGoal!.allowCents,
-                                          onTap: () =>
-                                              _toggleSegmentCompletion(segment),
-                                          onLongPress: () =>
-                                              _openSegmentDetail(segment),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-
-                              const SizedBox(height: 30),
-                            ],
-                          ),
-                        ),
-
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: AnalyticsView(goal: _activeGoal!),
-                        ),
+                        SavingsJarVisualizer(goal: _activeGoal!),
+                        const SizedBox(height: 16),
+                        AnalyticsView(goal: _activeGoal!),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ],
               ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -993,6 +1338,48 @@ class _FilterChip extends StatelessWidget {
                   ? AppTheme.textDark
                   : (isDark ? AppTheme.textSecondary : Colors.black87),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionPillButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ActionPillButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.16 : 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: color.withValues(alpha: isDark ? 0.3 : 0.15),
+                width: 0.8,
+              ),
+            ),
+            child: Icon(icon, size: 18, color: color),
           ),
         ),
       ),

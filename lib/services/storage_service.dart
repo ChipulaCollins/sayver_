@@ -55,11 +55,15 @@ class StorageService {
     }
   }
 
-  static Future<void> saveActiveGoalId(String goalId) async {
+  static Future<void> saveActiveGoalId(String? goalId) async {
     _memoryActiveId = goalId;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_activeGoalIdKey, goalId);
+      if (goalId == null) {
+        await prefs.remove(_activeGoalIdKey);
+      } else {
+        await prefs.setString(_activeGoalIdKey, goalId);
+      }
     } catch (_) {}
   }
 

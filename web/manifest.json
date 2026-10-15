@@ -1,11 +1,11 @@
 {
-    "name": "sayver",
-    "short_name": "sayver",
+    "name": "Sayver - Gamified Savings & Envelope Tracker",
+    "short_name": "Sayver",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#312C51",
+    "theme_color": "#F0C38E",
+    "description": "Sayver is a gamified savings and visual envelope money tracker designed to make achieving financial goals motivating, visual, and rewarding.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
